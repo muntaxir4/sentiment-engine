@@ -1,1 +1,4 @@
 node_modules/
+.venv
+qwen_merged_16bit
+unsloth_compiled_cache

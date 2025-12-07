@@ -1,0 +1,19 @@
+FROM ./sentiment-engine-q8.gguf
+
+# 1. The Chat Template (CRITICAL)
+# This tells the model: "Here is the system prompt, here is the user, now you answer."
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ if .Prompt }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+{{ end }}<|im_start|>assistant
+"""
+
+# 2. System Prompt (Forces JSON behavior)
+SYSTEM "You are a sentiment analysis engine. Analyze the input text and respond ONLY with a valid JSON object containing 'polarity', 'emotion', 'confidence_score', and 'reasoning'. Do not output markdown code blocks or conversational text."
+
+# 3. Parameters (Stops the infinite generation)
+PARAMETER stop "<|im_start|>"
+PARAMETER stop "<|im_end|>"
+PARAMETER stop "<|endoftext|>"
+PARAMETER temperature 0.1
