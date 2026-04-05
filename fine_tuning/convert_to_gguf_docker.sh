@@ -29,7 +29,7 @@ echo "Type:   ${OUTTYPE}"
 
 docker run --rm \
   -v "${FINE_TUNING_DIR}:/data" \
-  ghcr.io/ggerganov/llama.cpp:full-cuda \
+  ghcr.io/ggerganov/llama.cpp:full-cuda-b4719 \
   --convert /data/full/qwen_merged_full_16bit \
   --outtype "${OUTTYPE}" \
   --outfile "/data/full/$(basename "${OUTPUT_FILE}")"

@@ -55,6 +55,14 @@ export function SentimentAnalyzer() {
         sendMessage({ text: inputText.trim() })
     }
 
+    const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+            e.preventDefault()
+            if (status == "streaming" || status == "submitted" || !inputText.trim()) return
+            handleAnalyze()
+        }
+    }
+
     return (
         <div className="space-y-10">
             {/* Input Section */}
@@ -70,8 +78,10 @@ export function SentimentAnalyzer() {
                     placeholder="Paste or type text to analyze..."
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
+                    onKeyDown={handleTextareaKeyDown}
                     className="min-h-[160px] resize-none bg-card border-border text-foreground placeholder:text-muted-foreground/60 text-base leading-relaxed"
                 />
+                <p className="text-xs text-muted-foreground">Press Ctrl+Enter (Cmd+Enter on Mac) to analyze</p>
                 <Button onClick={handleAnalyze} disabled={status == "streaming" || status == "submitted" || !inputText.trim()} className="gap-2 h-11 px-6">
                     {status == "streaming" || status == "submitted" ? (
                         <>

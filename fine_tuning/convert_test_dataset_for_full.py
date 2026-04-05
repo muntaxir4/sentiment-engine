@@ -14,26 +14,55 @@ def safe_parse_output(output_field):
             return {}
     return {}
 
-def normalize_emotions(emotion_value):
-    # convert old single label -> list for multi-emotion format
-    if emotion_value is None:
-        return []
-    if isinstance(emotion_value, list):
-        return [str(e).strip() for e in emotion_value if str(e).strip()]
-    e = str(emotion_value).strip()
-    if not e:
-        return []
-    # handle comma-separated legacy cases
-    if "," in e:
-        return [x.strip() for x in e.split(",") if x.strip()]
-    return [e]
+def normalize_emotions(parsed):
+    # Target schema:
+    # "emotions": [{"emotion": "<label>", "confidence_score": <0-1>}]
+    #
+    # Supports legacy input shapes:
+    # 1) "emotion": "Neutral", "confidence_score": 1.0
+    # 2) "emotion": ["Joy", "Surprise"], "confidence_score": 0.8
+    # 3) "emotions": [{"emotion":"Joy","confidence_score":0.9}, ...]
+    # 4) "emotions": ["Joy", "Surprise"]
+    default_conf = float(parsed.get("confidence_score", 1.0))
+
+    if isinstance(parsed.get("emotions"), list):
+        out = []
+        for item in parsed["emotions"]:
+            if isinstance(item, dict):
+                label = str(item.get("emotion", "")).strip()
+                if not label:
+                    continue
+                conf = float(item.get("confidence_score", default_conf))
+                out.append({"emotion": label, "confidence_score": conf})
+            else:
+                label = str(item).strip()
+                if label:
+                    out.append({"emotion": label, "confidence_score": default_conf})
+        if out:
+            return out
+
+    legacy = parsed.get("emotion", "Neutral")
+    labels = []
+    if legacy is None:
+        labels = ["Neutral"]
+    elif isinstance(legacy, list):
+        labels = [str(e).strip() for e in legacy if str(e).strip()]
+    else:
+        e = str(legacy).strip()
+        if "," in e:
+            labels = [x.strip() for x in e.split(",") if x.strip()]
+        elif e:
+            labels = [e]
+
+    if not labels:
+        labels = ["Neutral"]
+    return [{"emotion": label, "confidence_score": default_conf} for label in labels]
 
 def convert_row(row):
     parsed = safe_parse_output(row.get("output"))
 
     polarity = parsed.get("polarity", "Neutral")
-    emotions = normalize_emotions(parsed.get("emotion", "Neutral"))
-    confidence = parsed.get("confidence_score", 1.0)
+    emotions = normalize_emotions(parsed)
     reasoning = parsed.get("reasoning", "")
 
     # target row for full-model evaluation
@@ -42,8 +71,7 @@ def convert_row(row):
         "input": row.get("input", ""),
         "expected_output": {
             "polarity": polarity,
-            "emotions": emotions,              # <-- list now
-            "confidence_score": confidence,
+            "emotions": emotions,
             "reasoning": reasoning
         }
     }

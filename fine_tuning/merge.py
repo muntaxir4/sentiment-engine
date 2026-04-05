@@ -4,7 +4,7 @@ import os
 import shutil
 from os import path
 
-__DIR__ = path.dirname(__file__)
+__DIR__ = "/content/drive/MyDrive/sentiment-engine"
 
 # --- CONFIGURATION ---
 ADAPTER_DIR = path.join(__DIR__, "qwen_sentiment_finetuned_full")
