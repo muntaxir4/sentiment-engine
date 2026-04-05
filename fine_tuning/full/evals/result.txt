@@ -1,0 +1,94 @@
+==================================================
+FINAL RESULTS (OLLAMA)
+==================================================
+Accuracy: 38.32%
+Parse errors: 0/274 (0.00%)
+Request errors: 0/274 (0.00%)
+
+Classification Report:
+                precision    recall  f1-score   support
+
+    Admiration       0.60      0.60      0.60        10
+     Amusement       0.50      0.50      0.50        10
+         Anger       0.41      0.70      0.52        10
+     Annoyance       0.14      0.10      0.12        10
+      Approval       1.00      0.10      0.18        10
+        Caring       1.00      0.50      0.67        10
+     Confusion       0.67      0.40      0.50        10
+     Curiosity       0.40      0.80      0.53        10
+        Desire       0.00      0.00      0.00        10
+Disappointment       0.50      0.20      0.29        10
+   Disapproval       0.67      0.20      0.31        10
+       Disgust       0.83      0.50      0.62        10
+ Embarrassment       1.00      0.10      0.18        10
+    Excitement       0.80      0.40      0.53        10
+          Fear       0.26      0.70      0.38        10
+     Gratitude       1.00      0.80      0.89        10
+         Grief       1.00      0.67      0.80         6
+           Joy       0.26      0.90      0.41        10
+          Love       0.67      0.80      0.73        10
+   Nervousness       1.00      0.20      0.33        10
+       Neutral       0.11      0.70      0.19        10
+      Optimism       0.60      0.30      0.40        10
+         Pride       1.00      0.10      0.18        10
+   Realization       0.00      0.00      0.00        10
+        Relief       1.00      0.12      0.22         8
+       Remorse       0.00      0.00      0.00        10
+       Sadness       0.18      0.30      0.22        10
+      Surprise       0.33      0.10      0.15        10
+
+      accuracy                           0.38       274
+     macro avg       0.57      0.39      0.37       274
+  weighted avg       0.56      0.38      0.37       274
+
+
+Data Diagnostics:
+- Unique true labels: 28
+- Unique predicted labels: 27
+
+Class Support (true -> predicted):
+- Admiration: true=10, pred=10
+- Amusement: true=10, pred=10
+- Anger: true=10, pred=17
+- Annoyance: true=10, pred=7
+- Approval: true=10, pred=1
+- Caring: true=10, pred=5
+- Confusion: true=10, pred=6
+- Curiosity: true=10, pred=20
+- Desire: true=10, pred=1
+- Disappointment: true=10, pred=4
+- Disapproval: true=10, pred=3
+- Disgust: true=10, pred=6
+- Embarrassment: true=10, pred=1
+- Excitement: true=10, pred=5
+- Fear: true=10, pred=27
+- Gratitude: true=10, pred=8
+- Grief: true=6, pred=4
+- Joy: true=10, pred=34
+- Love: true=10, pred=12
+- Nervousness: true=10, pred=2
+- Neutral: true=10, pred=62
+- Optimism: true=10, pred=5
+- Pride: true=10, pred=1
+- Realization: true=10, pred=2
+- Relief: true=8, pred=1
+- Remorse: true=10, pred=0
+- Sadness: true=10, pred=17
+- Surprise: true=10, pred=3
+
+Top Confusions (true -> pred):
+- Remorse -> Sadness: 8
+- Nervousness -> Fear: 7
+- Approval -> Neutral: 6
+- Desire -> Neutral: 5
+- Realization -> Neutral: 5
+- Surprise -> Neutral: 5
+- Caring -> Neutral: 4
+- Disappointment -> Neutral: 4
+- Excitement -> Joy: 4
+- Pride -> Joy: 4
+- Sadness -> Fear: 4
+- Admiration -> Joy: 3
+- Annoyance -> Neutral: 3
+- Annoyance -> Anger: 3
+- Confusion -> Curiosity: 3

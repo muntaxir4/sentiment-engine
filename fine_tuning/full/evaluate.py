@@ -6,13 +6,14 @@ from sklearn.metrics import classification_report, accuracy_score, confusion_mat
 import matplotlib.pyplot as plt
 import seaborn as sns
 from os import path
+import re
 
 __DIR__ = path.dirname(__file__)
 # --- CONFIGURATION ---
 ADAPTER_PATH = path.join(
-    __DIR__, "qwen_sentiment_finetuned"
-)  # Your local adapter folder
-TEST_FILE = path.join(__DIR__, "datasets/test_qwen_28_balanced.jsonl")  # Your test file
+    __DIR__, "qwen_sentiment_finetuned_full"
+)  # Full adapter folder
+TEST_FILE = path.join(__DIR__, "datasets/test_qwen_28_full.jsonl")  # Full test file
 MAX_SEQ_LENGTH = 2048
 
 # 1. Load Model (Base + Adapters)
@@ -47,6 +48,64 @@ with open(TEST_FILE, "r") as f:
 
 y_true = []
 y_pred = []
+parse_errors = 0
+
+
+def _parse_json_maybe(value):
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        return json.loads(value)
+    return {}
+
+
+def _normalize_emotion_label(label):
+    if not isinstance(label, str):
+        return "Unknown"
+    label = label.strip()
+    return label.capitalize() if label else "Unknown"
+
+
+def _extract_primary_emotion(obj):
+    # New schema: emotions = [{"emotion": "...", "confidence_score": 0.9}, ...]
+    emotions = obj.get("emotions")
+    if isinstance(emotions, list) and emotions:
+        best_label = None
+        best_conf = float("-inf")
+        for item in emotions:
+            if isinstance(item, dict):
+                label = _normalize_emotion_label(item.get("emotion", "Unknown"))
+                conf = item.get("confidence_score", 0.0)
+                try:
+                    conf = float(conf)
+                except Exception:
+                    conf = 0.0
+                if conf > best_conf and label != "Unknown":
+                    best_conf = conf
+                    best_label = label
+            elif isinstance(item, str):
+                label = _normalize_emotion_label(item)
+                if label != "Unknown" and best_label is None:
+                    best_label = label
+        if best_label:
+            return best_label
+
+    # Backward-compatible fallback
+    if "emotion" in obj:
+        return _normalize_emotion_label(obj.get("emotion", "Unknown"))
+
+    return "Unknown"
+
+
+def _extract_first_json_object(text):
+    # Handles cases where the model emits partial/repeated JSON.
+    match = re.search(r"\{[\s\S]*\}", text)
+    if not match:
+        raise ValueError("No JSON object found in response")
+    candidate = match.group(0)
+    decoder = json.JSONDecoder()
+    parsed, _ = decoder.raw_decode(candidate)
+    return parsed
 
 print(f"Starting evaluation on {len(test_entries)} examples...")
 
@@ -54,11 +113,10 @@ print(f"Starting evaluation on {len(test_entries)} examples...")
 for i, entry in tqdm.tqdm(enumerate(test_entries), total=len(test_entries)):
 
     # --- A. Parse Ground Truth ---
-    # Your file has "output": "{\"emotion\": \"Admiration\", ...}"
     try:
-        raw_output = entry["output"]
-        ground_truth_json = json.loads(raw_output)  # Parse the inner string
-        actual_emotion = ground_truth_json.get("emotion", "Unknown")
+        raw_output = entry.get("output", entry.get("expected_output"))
+        ground_truth_json = _parse_json_maybe(raw_output)
+        actual_emotion = _extract_primary_emotion(ground_truth_json)
     except Exception as e:
         print(f"Skipping bad line {i}: {e}")
         continue
@@ -77,7 +135,7 @@ for i, entry in tqdm.tqdm(enumerate(test_entries), total=len(test_entries)):
             **inputs,
             max_new_tokens=128,
             use_cache=True,
-            temperature=0.1,
+            temperature=0.0,
         )
 
     # --- D. Decode & Parse Prediction ---
@@ -93,11 +151,11 @@ for i, entry in tqdm.tqdm(enumerate(test_entries), total=len(test_entries)):
         elif "```" in answer_part:
             answer_part = answer_part.split("```")[1].strip()
 
-        # Parse prediction
-        pred_json = json.loads(answer_part)
-        predicted_emotion = pred_json.get("emotion", "Error")
+        pred_json = _extract_first_json_object(answer_part)
+        predicted_emotion = _extract_primary_emotion(pred_json)
     except:
         predicted_emotion = "ParseError"
+        parse_errors += 1
 
     y_true.append(actual_emotion)
     y_pred.append(predicted_emotion)
@@ -110,6 +168,7 @@ print("=" * 50)
 # Accuracy
 acc = accuracy_score(y_true, y_pred)
 print(f"✅ Accuracy: {acc:.2%}")
+print(f"⚠️ Parse errors: {parse_errors}/{len(y_true)} ({(parse_errors / max(len(y_true), 1)):.2%})")
 
 # Detailed Report
 labels = sorted(list(set(y_true + y_pred)))
@@ -128,7 +187,8 @@ try:
     plt.xticks(rotation=90)
     plt.yticks(rotation=0)
     plt.tight_layout()
-    plt.savefig("evaluation_matrix.png")
-    print("\n📸 Saved confusion matrix to 'evaluation_matrix.png'")
+    cm_out = path.join(__DIR__, "evaluation_matrix_full.png")
+    plt.savefig(cm_out)
+    print(f"\n📸 Saved confusion matrix to '{cm_out}'")
 except Exception as e:
     print(f"Could not generate plot: {e}")

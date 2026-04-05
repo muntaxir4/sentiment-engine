@@ -5,3 +5,4 @@ qwen_merged_full_16bit
 qwen_sentiment_finetuned
 unsloth_compiled_cache
 *.gguf
+*.pyc
