@@ -7,8 +7,8 @@ from os import path
 __DIR__ = path.dirname(__file__)
 
 # --- CONFIGURATION ---
-ADAPTER_DIR = path.join(__DIR__, "qwen_sentiment_finetuned")
-MERGED_DIR = path.join(__DIR__, "qwen_merged_16bit")
+ADAPTER_DIR = path.join(__DIR__, "qwen_sentiment_finetuned_full")
+MERGED_DIR = path.join(__DIR__, "qwen_merged_full_16bit")
 BASE_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
 
 # 1. Load Base Model (Must be 16-bit for merging)
