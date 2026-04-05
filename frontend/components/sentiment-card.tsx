@@ -22,6 +22,11 @@ const polarityConfig = {
     bg: "bg-neutral-light",
     text: "text-neutral-sentiment",
   },
+  Mixed: {
+    accent: "bg-amber-500",
+    bg: "bg-amber-100",
+    text: "text-amber-800",
+  },
 };
 
 export function SentimentCard({ sentiment, index }: SentimentCardProps) {
@@ -130,7 +135,7 @@ export function SentimentCard({ sentiment, index }: SentimentCardProps) {
 
         {/* Reasoning */}
         <p className="text-sm text-foreground/80 leading-relaxed">
-          {sentiment.reasoning}
+          {sentiment.reasoning || "No reasoning provided."}
         </p>
       </div>
     </div>

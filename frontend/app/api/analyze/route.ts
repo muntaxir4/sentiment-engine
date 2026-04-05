@@ -15,6 +15,7 @@ export async function POST(req: Request) {
     messages: convertToModelMessages(messages),
     providerOptions: {
       ollama: {
+        // format: "json",
         // think: true,
       },
     },
