@@ -6,3 +6,5 @@ qwen_sentiment_finetuned
 unsloth_compiled_cache
 *.gguf
 *.pyc
+venv/
+.venv/
