@@ -10,10 +10,11 @@ import { ArrowRight, Loader2 } from "lucide-react"
 import { DefaultChatTransport } from "ai"
 
 export interface SentimentResult {
-    polarity: "Positive" | "Negative" | "Neutral"
-    emotion: "Joy" | "Sadness" | "Anger" | "Fear" | "Surprise" | "Disgust" | "Neutral"
-    confidence_score: number
-    reasoning: string
+    polarity: "Positive" | "Negative" | "Neutral" | "Mixed"
+    emotion?: "Joy" | "Sadness" | "Anger" | "Fear" | "Surprise" | "Disgust" | "Neutral"
+    confidence_score?: number
+    reasoning?: string
+    emotions?: Array<{ emotion: string; confidence_score?: number }>
 }
 
 export function SentimentAnalyzer() {
@@ -32,12 +33,23 @@ export function SentimentAnalyzer() {
                 data?.message.parts.forEach(part => {
                     if (part.type === "text") {
                         try {
-                            const extractedText = part.text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-                            const parsedSentiment = JSON.parse(extractedText);
+                            const extractedText = part.text.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim();
+                            let parsedSentiment = JSON.parse(extractedText);
+
+                            // Handle responses where the model returns a JSON string that contains JSON.
+                            if (typeof parsedSentiment === "string") {
+                                parsedSentiment = JSON.parse(parsedSentiment);
+                            }
+
+                            const normalizeOne = (item: any): SentimentResult => ({
+                                ...item,
+                                reasoning: typeof item?.reasoning === "string" ? item.reasoning : "",
+                            });
+
                             if (Array.isArray(parsedSentiment)) {
-                                setSentiments(parsedSentiment);
+                                setSentiments(parsedSentiment.map(normalizeOne));
                             } else {
-                                setSentiments([parsedSentiment]);
+                                setSentiments([normalizeOne(parsedSentiment)]);
                             }
                         } catch (error) {
                             console.error("Error parsing sentiment JSON:", error);
@@ -55,6 +67,14 @@ export function SentimentAnalyzer() {
         sendMessage({ text: inputText.trim() })
     }
 
+    const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+            e.preventDefault()
+            if (status == "streaming" || status == "submitted" || !inputText.trim()) return
+            handleAnalyze()
+        }
+    }
+
     return (
         <div className="space-y-10">
             {/* Input Section */}
@@ -70,8 +90,10 @@ export function SentimentAnalyzer() {
                     placeholder="Paste or type text to analyze..."
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
+                    onKeyDown={handleTextareaKeyDown}
                     className="min-h-[160px] resize-none bg-card border-border text-foreground placeholder:text-muted-foreground/60 text-base leading-relaxed"
                 />
+                <p className="text-xs text-muted-foreground">Press Ctrl+Enter (Cmd+Enter on Mac) to analyze</p>
                 <Button onClick={handleAnalyze} disabled={status == "streaming" || status == "submitted" || !inputText.trim()} className="gap-2 h-11 px-6">
                     {status == "streaming" || status == "submitted" ? (
                         <>

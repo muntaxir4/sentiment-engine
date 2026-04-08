@@ -3,7 +3,7 @@ import torch
 from trl.trainer.sft_trainer import SFTTrainer
 from trl.trainer.sft_config import SFTConfig
 from datasets import load_dataset
-from os import path
+from os import path, listdir
 
 __DIR__ = path.dirname(__file__)
 
@@ -11,8 +11,8 @@ __DIR__ = path.dirname(__file__)
 MAX_SEQ_LENGTH = 2048
 DTYPE = None
 LOAD_IN_4BIT = False
-DATASET_FILE = path.join(__DIR__, "datasets/train_qwen_28_balanced.jsonl")
-OUTPUT_DIR = path.join(__DIR__, "qwen_sentiment_finetuned")
+DATASET_FILE = path.join(__DIR__, "full/datasets/train_qwen_28_full.jsonl")
+OUTPUT_DIR = path.join(__DIR__, "qwen_sentiment_finetuned_full")
 
 # 1. Load Model & Tokenizer
 print("Loading Qwen 2.5 1.5B model...")
@@ -93,6 +93,9 @@ sft_config = SFTConfig(
     fp16=not torch.cuda.is_bf16_supported(),
     bf16=torch.cuda.is_bf16_supported(),
     logging_steps=1,
+    save_strategy="steps",
+    save_steps=200,
+    save_total_limit=3,
     optim="adamw_8bit",
     weight_decay=0.01,
     lr_scheduler_type="linear",
@@ -108,7 +111,10 @@ trainer = SFTTrainer(
 
 # 5. Train
 print("Starting Training...")
-trainer_stats = trainer.train()
+has_checkpoint = path.isdir(OUTPUT_DIR) and any(
+    name.startswith("checkpoint-") for name in listdir(OUTPUT_DIR)
+)
+trainer_stats = trainer.train(resume_from_checkpoint=True if has_checkpoint else None)
 
 # 6. Save Adapters Only (SAFE)
 print("Training complete. Saving adapters...")

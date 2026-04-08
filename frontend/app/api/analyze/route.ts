@@ -11,10 +11,11 @@ export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
 
   const result = streamText({
-    model: ollama("sentiment-engine"),
+    model: ollama("sentiment-engine-full"),
     messages: convertToModelMessages(messages),
     providerOptions: {
       ollama: {
+        // format: "json",
         // think: true,
       },
     },
