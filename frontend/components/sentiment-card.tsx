@@ -52,7 +52,7 @@ export function SentimentCard({ sentiment, index }: SentimentCardProps) {
               confidence_score: item?.confidence_score,
             };
           })
-          .filter((item) => item.emotion)
+          .filter((item) => ["joy", "sadness", "surprise", "fear", "anger", "love"].includes(item.emotion.toLowerCase()))
       : asAny.emotion
         ? [{ emotion: asAny.emotion, confidence_score: asAny.confidence_score }]
         : [];
